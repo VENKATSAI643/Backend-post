@@ -6,10 +6,8 @@ const connectDB = require('./config/db');
 const { graphqlUploadExpress } = require('graphql-upload');
 const path = require('path');
 
-// Port number (ensure it's defined)
 const PORT = process.env.PORT || 4000;
 
-// Connect to the database
 connectDB();
 
 async function startServer() {
@@ -21,10 +19,8 @@ async function startServer() {
   await server.start();
   const app = express();
 
-  // File upload middleware
   app.use(graphqlUploadExpress());
 
-  // Serve static files from 'uploads' directory
   app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
   server.applyMiddleware({ app });

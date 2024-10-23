@@ -17,31 +17,6 @@ const postResolvers = {
   },
 
   Mutation: {
-    uploadFile: async (_, { file }) => {
-      const unique = uuid();
-      const { createReadStream, filename } = await file;
-      const uploadDir = path.join(__dirname, '../../uploads');
-
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir);
-      }
-
-      const filePath = path.join(uploadDir, `${unique}-${filename}`);
-      const stream = createReadStream();
-      const out = fs.createWriteStream(filePath);
-      stream.pipe(out);
-
-      await new Promise((resolve, reject) => {
-        out.on('finish', resolve);
-        out.on('error', reject);
-      });
-
-      return {
-        status: 200,
-        url: `http://localhost:4000/uploads/${unique}-${filename}`, // Return public file URL
-      };
-    },
-
     createPost: async (_, { files, caption, user_id }) => {
       const unique = uuid();
       const { createReadStream, filename } = await files;
@@ -74,13 +49,17 @@ const postResolvers = {
       }
     },
 
-    updatePost: async (_, { id, caption, image_url }) => {
-      return await Post.findByIdAndUpdate(id, { caption, image_url }, { new: true });
+    updatePost: async (_, { id, caption }) => {
+      return await Post.findByIdAndUpdate(id, { caption}, { new: true });
     },
 
     deletePost: async (_, { id }) => {
-      return await Post.findByIdAndDelete(id);
-    },
+        const deletedPost = await Post.findByIdAndDelete(id);
+        if (!deletedPost) {
+          throw new Error(`Post with ID ${id} not found.`);
+        }
+        return deletedPost; // Returns the deleted post
+      },      
   },
 };
 

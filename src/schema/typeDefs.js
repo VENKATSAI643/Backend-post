@@ -3,11 +3,6 @@ const { gql } = require('apollo-server');
 const typeDefs = gql`
   scalar Upload
 
-  type File {
-    status: Int!
-    url: String!
-  }
-
   type Post {
     id: ID!
     caption: String!
@@ -21,9 +16,8 @@ const typeDefs = gql`
   }
 
   type Mutation {
-    uploadFile(file: Upload!): File
     createPost(files: Upload!, user_id: ID!, caption: String!): Post
-    updatePost(id: ID!, caption: String, image_url: String): Post
+    updatePost(id: ID!, caption: String): Post
     deletePost(id: ID!): Post
   }
 `;
