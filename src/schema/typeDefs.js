@@ -17,7 +17,7 @@ const typeDefs = gql`
 
   type Mutation {
     createPost(files: Upload!, user_id: ID!, caption: String!): Post
-    updatePost(id: ID!, caption: String): Post
+    updatePost(id: ID!, caption: String!): Post
     deletePost(id: ID!): Post
   }
 `;
