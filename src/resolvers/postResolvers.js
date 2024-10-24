@@ -65,12 +65,31 @@ const postResolvers = {
     },
 
     deletePost: async (_, { id }) => {
-      const deletedPost = await Post.findByIdAndDelete(id);
-      if (!deletedPost) {
+      const post = await Post.findById(id);
+      if (!post) {
         throw new Error(`Post with ID ${id} not found.`);
       }
+
+      const imageUrl = post.image_url;
+      const filePath = path.join(__dirname, '../../uploads', path.basename(imageUrl));
+
+      try {
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      } catch (error) {
+        console.error('Error deleting file:', error);
+        throw new Error('Failed to delete the post image.');
+      }
+
+      const deletedPost = await Post.findByIdAndDelete(id);
+      if (!deletedPost) {
+        throw new Error(`Post with ID ${id} could not be deleted.`);
+      }
+
       return deletedPost; 
     },
+
 
     createLike: async (_, { user_id, post_id }) => {
       const existingLike = await Like.findOne({ user_id, post_id });
