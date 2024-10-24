@@ -8,6 +8,24 @@ const typeDefs = gql`
     caption: String!
     image_url: String!
     user_id: ID!
+    likes_count: Int
+    comments_count: Int
+    createdAt: String 
+    likes: [Like!]!  # Retrieve all users who liked the post
+    comments: [Comment!]!  # Retrieve all comments on the post
+  }
+  
+  type Like {
+    user_id: ID!
+    post_id: ID!
+    createdAt: String
+  }
+  
+  type Comment {
+    user_id: ID!
+    post_id: ID!
+    comment: String!
+    createdAt: String 
   }
 
   type Query {
@@ -19,6 +37,11 @@ const typeDefs = gql`
     createPost(files: Upload!, user_id: ID!, caption: String!): Post
     updatePost(id: ID!, caption: String!): Post
     deletePost(id: ID!): Post
+    createLike(user_id: ID!, post_id: ID!): Like
+    unLike(user_id: ID!, post_id: ID!): Boolean
+    createComment(user_id: ID!, post_id: ID!, comment: String!): Comment
+    updateComment(user_id: ID!, post_id: ID!, comment: String!): Comment
+    deleteComment(user_id: ID!, post_id: ID!): Comment 
   }
 `;
 

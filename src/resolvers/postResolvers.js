@@ -1,4 +1,6 @@
 const Post = require('../models/Post');
+const Like = require('../models/Like');
+const Comment = require('../models/Comment');
 const { GraphQLUpload } = require('graphql-upload');
 const { v4: uuid } = require('uuid');
 const fs = require('fs');
@@ -13,6 +15,15 @@ const postResolvers = {
     },
     getPosts: async () => {
       return await Post.find();
+    },
+  },
+
+  Post: {
+    likes: async (post) => {
+      return await Like.find({ post_id: post.id }); // Find all likes for this post
+    },
+    comments: async (post) => {
+      return await Comment.find({ post_id: post.id }); // Find all comments for this post
     },
   },
 
@@ -39,27 +50,129 @@ const postResolvers = {
 
         const newPost = new Post({
           caption,
-          image_url: `http://localhost:4000/uploads/${unique}-${filename}`, // Save public image URL
+          image_url: `http://localhost:4000/uploads/${unique}-${filename}`,
           user_id,
         });
 
-        return await newPost.save(); // Save post in DB and return the created post
+        return await newPost.save();
       } catch (error) {
         throw new Error('File upload failed');
       }
     },
 
     updatePost: async (_, { id, caption }) => {
-      return await Post.findByIdAndUpdate(id, { caption}, { new: true });
+      return await Post.findByIdAndUpdate(id, { caption }, { new: true });
     },
 
     deletePost: async (_, { id }) => {
-        const deletedPost = await Post.findByIdAndDelete(id);
-        if (!deletedPost) {
-          throw new Error(`Post with ID ${id} not found.`);
+      const deletedPost = await Post.findByIdAndDelete(id);
+      if (!deletedPost) {
+        throw new Error(`Post with ID ${id} not found.`);
+      }
+      return deletedPost; 
+    },
+
+    createLike: async (_, { user_id, post_id }) => {
+      const existingLike = await Like.findOne({ user_id, post_id });
+      if (existingLike) {
+        throw new Error("User already liked this post");
+      }
+
+      const likedPost = new Like({
+        user_id,
+        post_id,
+      });
+
+      await Post.findByIdAndUpdate(
+        post_id,
+        { $inc: { likes_count: 1 } }, 
+        { new: true }
+      );
+
+      return await likedPost.save();
+    },
+
+    unLike: async (_, { user_id, post_id }) => {
+      try {
+        const like = await Like.findOneAndDelete({ user_id, post_id });
+    
+        if (!like) {
+          return false;
         }
-        return deletedPost; // Returns the deleted post
-      },      
+    
+        await Post.findByIdAndUpdate(
+          post_id,
+          { $inc: { likes_count: -1 } }, 
+          { new: true }
+        );
+    
+        return true; 
+      } catch (error) {
+        console.error(error);
+        return false; 
+      }
+    },
+
+    createComment: async (_, { user_id, post_id, comment }) => {
+      const existingComment = await Comment.findOne({ user_id, post_id });
+      if (existingComment) {
+        throw new Error("User already commented");
+      }
+
+      const commentPost = new Comment({
+        user_id,
+        post_id,
+        comment,
+      });
+
+      await Post.findByIdAndUpdate(
+        post_id,
+        { $inc: { comments_count: 1 } }, 
+        { new: true }
+      );
+
+      return await commentPost.save();
+    },
+
+    updateComment: async (_, { user_id, post_id, comment }) => {
+      try {
+        // Find the comment by user_id and post_id
+        const existingComment = await Comment.findOne({ user_id, post_id });
+
+        if (!existingComment) {
+          throw new Error("Comment not found");
+        }
+
+        // Update the comment text
+        existingComment.comment = comment;
+
+        return await existingComment.save();
+      } catch (error) {
+        throw new Error("Failed to update comment");
+      }
+    },
+
+    deleteComment: async (_, { user_id, post_id }) => {
+      try {
+        // Find and delete the comment
+        const deletedComment = await Comment.findOneAndDelete({ user_id, post_id });
+
+        if (!deletedComment) {
+          throw new Error("Comment not found or already deleted");
+        }
+
+        // Decrement the comments_count on the related post
+        await Post.findByIdAndUpdate(
+          post_id,
+          { $inc: { comments_count: -1 } }, 
+          { new: true }
+        );
+
+        return deletedComment;
+      } catch (error) {
+        throw new Error("Failed to delete comment");
+      }
+    },
   },
 };
 
