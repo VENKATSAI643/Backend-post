@@ -20,10 +20,10 @@ const postResolvers = {
 
   Post: {
     likes: async (post) => {
-      return await Like.find({ post_id: post.id }); // Find all likes for this post
+      return await Like.find({ post_id: post.id }); 
     },
     comments: async (post) => {
-      return await Comment.find({ post_id: post.id }); // Find all comments for this post
+      return await Comment.find({ post_id: post.id });
     },
   },
 
@@ -136,14 +136,12 @@ const postResolvers = {
 
     updateComment: async (_, { user_id, post_id, comment }) => {
       try {
-        // Find the comment by user_id and post_id
         const existingComment = await Comment.findOne({ user_id, post_id });
 
         if (!existingComment) {
           throw new Error("Comment not found");
         }
 
-        // Update the comment text
         existingComment.comment = comment;
 
         return await existingComment.save();
@@ -154,14 +152,12 @@ const postResolvers = {
 
     deleteComment: async (_, { user_id, post_id }) => {
       try {
-        // Find and delete the comment
         const deletedComment = await Comment.findOneAndDelete({ user_id, post_id });
 
         if (!deletedComment) {
           throw new Error("Comment not found or already deleted");
         }
 
-        // Decrement the comments_count on the related post
         await Post.findByIdAndUpdate(
           post_id,
           { $inc: { comments_count: -1 } }, 

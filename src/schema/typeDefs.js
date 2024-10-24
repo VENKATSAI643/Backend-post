@@ -11,8 +11,8 @@ const typeDefs = gql`
     likes_count: Int
     comments_count: Int
     createdAt: String 
-    likes: [Like!]!  # Retrieve all users who liked the post
-    comments: [Comment!]!  # Retrieve all comments on the post
+    likes: [Like!]! 
+    comments: [Comment!]! 
   }
   
   type Like {
